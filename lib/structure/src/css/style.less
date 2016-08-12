@@ -1,0 +1,49 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+
+*,
+*:after,
+*:before {
+	box-sizing: border-box;
+}
+
+img {
+	display: block;
+	width: 96vw;
+	margin: 2vw 0;
+}
+
+img[src=""] {
+	display: none;
+}
+
+body {
+	padding: 2vw;
+}
+
+.demo {
+	width: 500px;
+	height: 300px;
+	border: 1px solid #ccc;
+	background: fade(#000, 30%);
+
+	a {
+		color: #f00
+	}
+
+}
+
+.column {
+	columns: 3;
+	column-gap: normal;
+	column-fill: auto;
+	column-rule: 1px solid #ccc;
+
+	.item {
+		column-span: none;
+		break-inside: auto;
+	}
+
+}
