@@ -8,10 +8,16 @@ var superagent = require('superagent');
 var cheerio = require('cheerio');
 var colors = require('colors');
 var webpack = require('webpack');
+var glob = require('glob');
 var exec = require('child_process').exec;
 
 var gs = require('../lib/generateStructure');
-var webpackConfig = require('./webpack.config');
+var gt = require('../es6_template');
+var webpackDevConfig = require('./webpack.dev.config');
+var webpackProConfig = require('./webpack.prod.config');
+var webpackServeConfig = require('./webpack.server.config');
+var global_config = require('./config');
+var run = require('./devServer');
 
 program
   .version(require('../package.json').version);
@@ -150,15 +156,22 @@ program
     });
 });
 
+program
+  .command('serve [name]')
+  .description('启动webpack-dev-server服务')
+  .action(function(name) {
+      run(global_config.port, webpackServeConfig(name));
+  });
+
 // compile es6 to es5
 program
   .command('compile [name]')
   .description('将ES6代码编译为ES5代码')
   .action(function(name) {
 
-    var _dir = 'es5_compiled';
+    buildWebpack(name, 'dev');
 
-    buildDevWebpack(name, _dir);
+    // buildDevWebpack(name, _dir);
 
     // fs.access(__dirname + _dir, fs.F_OK, function(err) {
     //     if(!err) {
@@ -173,12 +186,10 @@ program
 
 program
   .command('build [name]')
-  .description('将ES6代码编译为ES5代码')
+  .description('将ES6代码编译并打包为ES5代码')
   .action(function(name) {
 
-    var _dir = 'es5_build';
-
-    buildProdWebpack(name, _dir);
+    buildWebpack(name, 'prod');
     
     // fs.access(__dirname + _dir, fs.F_OK, function(err) {
     //     if(err) {
@@ -191,67 +202,105 @@ program
 
   });
 
+// program
+//   .command('copy [name]')
+//   .description('复制')
+//   .action(name => {
+//     gt(name);
+//   })
+
 program.parse(process.argv);
 
 
-function buildProdWebpack(name, dir) {
-  webpack(webpackConfig(name, {
-      output: {
-        path: path.resolve(process.cwd(), dir),
-        filename: '[name].[chunkhash].js',
-        chunkFilename: '[name].[chunkhash].chunk.js'
-      },
-      plugins: [
-        new webpack.optimize.OccurrenceOrderPlugin(true),
-        new webpack.optimize.DedupePlugin(),
-        new webpack.optimize.UglifyJsPlugin({
-            compressor: {
-                screw_ie8: true,
-                warnings: false
-            },
-            mangle: {
-                screw_ie8: true
-            },
-            output: {
-                comments: false,
-                screw_ie8: true
-            }
-        })
-      ]
-    }), function(err, stats) {
-      if(err) {
-        console.log(`compile error! ${err}`.error);
-      }
+function buildWebpack(name, flag) {
+  var webpackCfg;
+  
+  glob('{./package.json,./.babelrc}', {}, (err, matches) => {
+    if (err) return console.log(`出问题了${err}`);
 
-      console.log(`Nice, build success! output: ${path.resolve(process.cwd(), dir, name)}`.info);
-    });
+    if(matches.length === 2) {
+      handleCallback()
+    }
+
+    if(matches.length < 2) {
+      gt().then(err => {
+        if(err) return console.log('创建package.json文件时出错'.danger);
+        console.log('已为您创建package.json、.babelrc文件'.info);
+        console.log();
+        console.log('现在为您安装依赖包，请稍等...');
+        console.log();
+        exec('npm install', (err, stdout, stderr) => {
+          if(err) {
+            console.log(`exec error: ${err}`.danger);
+          }
+
+          handleCallback()
+        });
+      });
+    }
+  });
+
+  // fs.stat('./package.json', (err, stats) => {
+  //   if (err) {
+  //     // console.log(`您当前目前没有package.json文件!`.danger);
+  //     gt().then(err => {
+  //       if(err) return console.log('创建package.json文件时出错'.danger);
+  //       console.log('已为您创建package.json、.babelrc文件'.info);
+  //       console.log();
+  //       console.log('现在为您安装依赖包，请稍等...');
+  //       exec('npm install', (err, stdout, stderr) => {
+  //         if(err) {
+  //           console.log(`exec error: ${err}`.danger);
+  //         }
+
+  //         handleCallback()
+  //       });
+  //     });
+  //   }
+    
+  // });
+
+
+
+  function handleCallback() {
+    if(flag === 'dev') {
+      webpackCfg = webpackDevConfig(name);
+    } else {
+      webpackCfg = webpackProdConfig(name);
+    }
+
+    handleCompile(webpackCfg);
+  }
+
+  
 }
 
-function buildDevWebpack(name, dir) {
-  webpack(webpackConfig(name, {
-      output: {
-        path: path.resolve(process.cwd(), dir),
-        filename: '[name].js',
-        chunkFilename: '[name].chunk.js'
-      },
-      plugins: [
-        new webpack.NoErrorsPlugin(),
-        new webpack.optimize.CommonsChunkPlugin({
-            name: 'common',
-            children: true,
-            minChunks: 2,
-            async: true
-        })
-      ]
-    }), function(err, stats) {
-      if(err) {
-        console.log(`compile error! ${err}`.error);
-      }
+// function buildProdWebpack(name) {
+//   var webpackCfg = webpackProdConfig(name);
+//   handleCompile(webpackCfg);
+// }
 
-      console.log(`Nice, build success! output: ${path.resolve(process.cwd(), dir, name)}`.info);
-    });
+// function buildDevWebpack(name) {
+//   var webpackCfg = webpackDevConfig(name);
+//   handleCompile(webpackCfg);
+// }
+
+
+function handleCompile(webpackCfg) {
+  webpack(webpackCfg, function(err, stats) {
+    if (err || stats.hasErrors() || stats.hasWarnings()) {
+      console.log(stats.toString({
+        chunks: false, // Makes the build much quieter
+          colors: true
+      }));
+      process.exit(1);
+    } else {
+      console.log(`Nice, build success!`.info);
+      process.exit(0);
+    }
+
+  });
 }
-
 
 // 原生写法
 
