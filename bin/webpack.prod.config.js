@@ -1,6 +1,7 @@
 var path = require('path');
 var webpack = require('webpack');
 var webpackConfig = require('./webpack.config');
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
 var dir = require('./config').buildPath;
 
 module.exports = function(name) {
@@ -11,6 +12,7 @@ module.exports = function(name) {
             chunkFilename: '[name].[chunkhash].chunk.js'
         },
         plugins: [
+            new ExtractTextPlugin('[name].[contenthash].css'),
             new webpack.optimize.OccurrenceOrderPlugin(true),
             new webpack.optimize.DedupePlugin(),
             new webpack.optimize.UglifyJsPlugin({

@@ -1,5 +1,6 @@
 var path = require('path');
 var webpack = require('webpack');
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 module.exports = function(entry, opts) {
 	return {
@@ -22,6 +23,10 @@ module.exports = function(entry, opts) {
 				test: /\.css$/,
 				exclude: /node_modules/,
 				loaders: ['style-loader', 'css-loader']
+			}, {
+				test: /\.scss$/,
+				exclude: /node_modules/,
+				loaders: ['style-loader', 'css-loader', 'autoprefixer-loader?{browsers: ["last 2 version", "IE >= 9", "Firefox 15"]}', 'sass-loader']
 			}, {
 				test: /\.(eot|svg|ttf|woff|woff2)$/,
 				loader: 'file-loader'
