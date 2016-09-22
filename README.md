@@ -19,7 +19,7 @@ $ lenq -h
   Commands:
 
     *
-    plan|p [method] [content] [date]  管理您的日常计划
+    plan|p [method] [content]         管理您的日常计划
     search|s [keyword]                通过搜索引擎搜索内容 [baidu、google], 默认使用baidu搜索引擎
     create|c [directory]              创建gulp + webpack工程项目
     news|n [keyword]                  获取最新的it新闻
@@ -37,4 +37,4 @@ $ lenq -h
 
 ### Other
 
-目前，serve命令还未修复，暂时未能使用，如果你对此项目有兴趣，欢迎Fork!
+目前，serve命令还未修复，暂时未能使用，如果您对此项目有兴趣，欢迎Fork!

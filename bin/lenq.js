@@ -59,7 +59,7 @@ program
   });
 
 program
-  .command('plan [method] [content] [date]')
+  .command('plan [method] [content]')
   .alias('p')
   .description('管理您的日常计划')
   .action(function(method, content) {

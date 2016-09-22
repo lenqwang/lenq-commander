@@ -48,15 +48,57 @@ function list(date) {
 
 function fetchFileContext(date) {
 	fs.readFile(getFilePathByDate(date), function(err, data) {
-		if (err) return console.log('未记录该日期的计划!'.danger);
+		if (err) return console.log(`未记录${date || '今天'}的计划!`.danger);
 
 		console.log(`读取文件结果[${moment(date).format('YYYY-MM-DD')}]：\n`);
 		console.log(data.toString().info);
 	})
 }
 
+function del(date) {
+	if(date === '*') {
+		var files = fs.readdirSync(__dirname);
 
-module.exports = function(method, content, date) {
+		files.forEach(function(file, index) {
+			if(/\.txt/.test(file)) {
+				var curPath = path.join(__dirname, file);
+
+				fs.stat(curPath, function(err, stats) {
+					if (err) return console.log('err: ' + err);
+
+					if(stats.isFile()) {
+						fs.unlink(curPath, function() {
+							console.log(`成功删除.txt文件: ${curPath}`.info);
+						});
+					}
+				});
+
+				
+			}
+		});
+
+		return;
+	}
+
+	if (/\d{4}-\d{2}-\d{2}/.test(date)) {
+		var _path = path.join(__dirname, date);
+
+		if(fs.stat(_path).isFile()) {
+			fs.unlink(_path, function() {
+				console.log(`成功删除.txt文件: ${_path}`.info);
+			});
+		}
+
+		return;
+	}
+
+	fs.unlink(getFilePathByDate(), function() {
+		console.log(`成功删除.txt文件: ${getFilePathByDate()}`.info);
+	});
+}
+
+
+module.exports = function(method, content) {
 
 	switch(method) {
 		case "add":
@@ -65,6 +107,10 @@ module.exports = function(method, content, date) {
 
 		case "list":
 			list(content);
+			break;
+
+		case "del":
+			del(content);
 			break;
 
 		// case "test":
