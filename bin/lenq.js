@@ -19,6 +19,8 @@ var webpackServeConfig = require('./webpack.server.config');
 var global_config = require('./config');
 var run = require('./devServer');
 
+var plan = require('./plan');
+
 program
   .version(require('../package.json').version);
 
@@ -54,6 +56,14 @@ program
   .command('*')
   .action(function(env) {
     console.log('您输入的命令不存在!'.error);
+  });
+
+program
+  .command('plan [method] [content] [date]')
+  .alias('p')
+  .description('管理您的日常计划')
+  .action(function(method, content) {
+      plan(method, content);
   });
 
 // search

@@ -1,5 +1,6 @@
 var path = require('path');
 var webpack = require('webpack');
+var es3ifyPlugin = require('es3ify-webpack-plugin');
 var ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 module.exports = function(entry, opts) {
@@ -14,7 +15,7 @@ module.exports = function(entry, opts) {
 		module: {
 			loaders: [{
 				test: /\.js$/,
-				loader: 'babel-loader',
+				loader: 'babel',
 				exclude: /node_modules/,
 				query: {
 					presets: ['es2015', 'stage-0', 'stage-1', 'stage-2', 'stage-3']
@@ -22,26 +23,39 @@ module.exports = function(entry, opts) {
 			}, {
 				test: /\.css$/,
 				exclude: /node_modules/,
-				loaders: ['style-loader', 'css-loader']
+				loaders: ['style', 'css']
 			}, {
 				test: /\.scss$/,
 				exclude: /node_modules/,
-				loaders: ['style-loader', 'css-loader', 'autoprefixer-loader?{browsers: ["last 2 version", "IE >= 9", "Firefox 15"]}', 'sass-loader']
+				loaders: [
+					'style', 
+					'css', 
+					{
+						loader: 'autoprefixer',
+						query: {
+							browsers: ["last 2 version", "IE >= 9", "Firefox 15"]
+						}
+					}, 
+					'sass'
+				]
 			}, {
 				test: /\.(eot|svg|ttf|woff|woff2)$/,
-				loader: 'file-loader'
+				loader: 'file'
 			}, {
 				test: /\.(jpg|png|gif)$/,
 				loaders: [
-					'file-loader',
+					'file',
 					'image-webpack?{progressive:true, optimizationLevel: 7, interlaced: false, pngquant:{quality: "65-90", speed: 4}}'
 				]
 			}, {
 				test: /\.json$/,
-				loader: 'json-loader'
+				loader: 'json'
 			}, {
 				test: /\.(mp4|webm)$/,
-				loader: 'url-loader?limit=10000'
+				loader: 'url',
+				query: {
+					limit: 10000
+				}
 			}]
 		},
 
@@ -54,7 +68,8 @@ module.exports = function(entry, opts) {
 				'process.env': {
 					NODE_ENV: JSON.stringify(process.env.NODE_ENV)
 				}
-			})
+			}),
+			new es3ifyPlugin()
 		]),
 
 		resolve: {
