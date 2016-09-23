@@ -20,6 +20,7 @@ var global_config = require('./config');
 var run = require('./devServer');
 
 var plan = require('./plan');
+var convert = require('./convert');
 
 program
   .version(require('../package.json').version);
@@ -58,12 +59,21 @@ program
     console.log('您输入的命令不存在!'.error);
   });
 
+// 计划
 program
   .command('plan [method] [content]')
   .alias('p')
   .description('管理您的日常计划')
   .action(function(method, content) {
       plan(method, content);
+  });
+
+program
+  .command('convert [html file path]')
+  .alias('cvt')
+  .description('转换html为js模板文件')
+  .action(function(name) {
+      convert(name);
   });
 
 // search

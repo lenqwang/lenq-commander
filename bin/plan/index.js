@@ -129,7 +129,7 @@ function getFilePathByDate(date) {
 function getDaysArr(n) {
 	var tempArr = [];
 
-	for(var i = 1; i <= 7; i++) {
+	for(var i = 1; i <= n; i++) {
 	  var temp = moment().subtract(i, 'days').format('YYYY-MM-DD');
 	  tempArr.push(temp);
 	}
