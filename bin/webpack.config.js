@@ -1,7 +1,6 @@
 var path = require('path');
 var webpack = require('webpack');
 var es3ifyPlugin = require('es3ify-webpack-plugin');
-var ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 module.exports = function(entry, opts) {
 	return {
