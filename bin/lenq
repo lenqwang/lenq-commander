@@ -9,6 +9,8 @@ var cheerio = require('cheerio');
 var colors = require('colors');
 var webpack = require('webpack');
 var glob = require('glob');
+var openurl = require('openurl');
+var fetch = require('node-fetch');
 var exec = require('child_process').exec;
 
 var gs = require('../lib/generateStructure');
@@ -21,6 +23,8 @@ var run = require('./devServer');
 
 var plan = require('./plan');
 var convert = require('./convert');
+
+// var execCmd = process.platform === 'win32' ? 'start' : 'open';
 
 program
   .version(require('../package.json').version);
@@ -76,6 +80,51 @@ program
       convert(name);
   });
 
+program
+  .command('total [npmPackage] [startDate] [endDate]')
+  .alias('t')
+  .description('查询npm项目的总下载量')
+  .action(function (name, sd, ed) {
+    var now = new Date();
+    var month = now.getMonth() >= 10 ? now.getMonth() + 1 : '0'+ (now.getMonth() + 1);
+    var tomorrow = `${now.getFullYear()}-${month}-${now.getDate() - 1}`;
+    var today = `${now.getFullYear()}-${month}-${now.getDate()}`;
+    var api = `https://api.npmjs.org/downloads/range/${sd || tomorrow}:${ed || today}/${name}`;
+    
+    fetch(api)
+      .then(res => res.json())
+      .then(({ downloads }) => downloads.reduce((total, day) => total + day.downloads, 0))
+      .then(total => {
+        let reg = /(?=(?!\b)(\d{3})+$)/g;
+        total = `${total}`.replace(reg, ',');
+        console.log(`${total}`.info);
+      })
+  })
+
+program
+  .command('filter [repo] [keyword] [extension]')
+  .alias('f')
+  .description('过滤code在github的仓库上')
+  .action(function (repo, keyword, extension) {
+    var splitRE = /[, |]/;
+    var extensionArr = [];
+
+    if (extension && splitRE.test(extension)) {
+      extensionArr = extension.split(splitRE);
+      extension = extensionArr.map(extensionName => `extension:${extensionName}`).join(' ');
+    } else {
+      extension = `extension:${extension || 'js'}`;
+    }
+
+    var kw = `repo:${repo} ${extension} ${keyword}`;
+    var searchUrl = `https://github.com/search?utf8=✓&q=${kw}+&type=Code`;
+    // var gistSearch = `https://gist.github.com/search?utf8=✓&q=user:${username}+${keyword}&ref=searchresults`
+
+    openurl.open(searchUrl);
+    
+    // exec(`${execCmd} ${searchUrl}`);
+  })
+
 // search
 program
   .command('search [keyword]')
@@ -96,7 +145,8 @@ program
     }
 
     // exec
-    exec(`start ${searchUrl}`);
+    // exec(`${execCmd} ${searchUrl}`);
+    openurl.open(searchUrl);
   });
 
 program
@@ -139,7 +189,7 @@ program
 
           items.push({
             title: $title.text(),
-            href: $title.find('a').attr('href')
+            href: newsUrl + '' + ($title.find('a').attr('href')).slice(1)
           });
         });
 
@@ -147,14 +197,14 @@ program
         for(var item of items) {
           if(name) {
             if(name && item.title.toLowerCase().search(name.toLowerCase()) !== -1) {
-              console.log(`${item.title}`.info.dim, ' ', ' ', '->', `(${item.href})`.error);
+              console.log(`${(item.title).info.dim} (${(item.href).error})`);
             }
             else {
               // console.log(`sorry, 找不到和${name}相关的新闻`);
             }
           }
           else {
-            console.log(`${item.title}`.info.dim, ' ', ' ', '->', `( ${item.href} )`.error);
+            console.log(`${(item.title).info.dim} (${(item.href).error})`);
           }
         }
 
