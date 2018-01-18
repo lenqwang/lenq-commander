@@ -168,10 +168,13 @@ program
   .alias('n')
   .description('获取最新的it新闻')
   .action(function(name) {
-    var newsUrl = 'http://toutiao.io/';
+    var originUrl = 'http://toutiao.io/'
+    var newsUrl = '';
 
     if(name) {
       newsUrl = 'http://toutiao.io/search?utf8=%E2%9C%93&q=' + name;
+    } else {
+      newsUrl = originUrl
     }
 
     superagent.get(newsUrl)
@@ -189,7 +192,7 @@ program
 
           items.push({
             title: $title.text(),
-            href: newsUrl + '' + ($title.find('a').attr('href')).slice(1)
+            href: originUrl + '' + ($title.find('a').attr('href')).slice(1)
           });
         });
 
